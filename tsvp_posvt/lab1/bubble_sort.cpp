@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <iterator>
+#include <sstream>
 
 template <class BidirectionalIterator, class Compare>
 std::pair<std::size_t, std::size_t>
