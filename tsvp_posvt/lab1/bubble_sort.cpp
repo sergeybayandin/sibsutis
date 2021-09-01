@@ -27,5 +27,8 @@ int main()
 	for (auto val : v)
 		std::cout << val << '\t';
 	std::cout << '\n';
+	std::cout << "m = " << m << '\n';
+	std::cout << "n = " << n << '\n';
+	std::cout << "m + n = " << m + n << '\n';
 	return EXIT_SUCCESS;
 }
