@@ -4,9 +4,9 @@
 #include <sstream>
 #include <type_traits>
 
-template <class BidirectionalIterator, class Compare>
-void merge(BidirectionalIterator first, BidirectionalIterator mid,
-	BidirectionalIterator last, Compare comp, std::size_t& m, std::size_t& n)
+template <class ForwardIterator, class Compare>
+void merge(ForwardIterator first, ForwardIterator mid,
+	ForwardIterator last, Compare comp, std::size_t& m, std::size_t& n)
 {
 	std::vector<std::remove_reference_t<decltype(*first)>> merged;
 	merged.reserve(std::distance(first, last));
