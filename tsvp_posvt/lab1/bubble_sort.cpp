@@ -10,16 +10,18 @@ bubble_sort(BidirectionalIterator first, BidirectionalIterator last, Compare com
 	std::size_t m {}, n {};
 	if (first == last)
 		return {m, n};
-	for (bool sorted {false}; !sorted; ) {
-		auto _first {first};
+	while (true) {
+		auto sorted {true};
 		--last;
-		for (sorted = true; _first != last; ++_first) {
+		for (auto _first {first}; _first != last; ++_first) {
 			if ((++m, comp(*std::next(_first), *_first))) {
 				std::iter_swap(std::next(_first), _first);
 				n += 3;
 				sorted = false;
 			}
 		}
+		if (sorted)
+			break;
 	}
 	return {m, n};
 }
