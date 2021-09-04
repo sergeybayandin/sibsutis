@@ -4,21 +4,25 @@
 #include <sstream>
 #include <type_traits>
 
-template <class ForwardIterator, class Compare>
-void merge(ForwardIterator first, ForwardIterator mid,
-	ForwardIterator last, Compare comp, std::size_t& m, std::size_t& n)
+template <class BidirectionalIterator, class Compare>
+void merge(BidirectionalIterator first, BidirectionalIterator last, 
+	std::size_t i, Compare comp, std::size_t& m, std::size_t& n)
 {
-	std::vector<std::remove_reference_t<decltype(*first)>> merged;
-	merged.reserve(std::distance(first, last));
-	auto l_first {first}, r_first {mid};
-	while (l_first != mid && r_first != last) {
-		auto& it {(++m, comp(*l_first, *r_first)) ? l_first : r_first};
-		merged.push_back(std::move(*it)); ++n;
-		++it;
+	std::vector<std::remove_reference_t<decltype(*first)>> buf(first, last);
+	const auto _first {std::begin(buf)}, mid {std::next(_first, i)}, _last {std::end(buf)};
+	for (auto l_first {_first}, r_first {mid}; first != last; ++first) {
+		if (l_first == mid) {
+			*first = std::move(*r_first); ++n;
+			++r_first;
+		} else if (r_first == _last) {
+			*first = std::move(*l_first); ++n;
+			++l_first;
+		} else {
+			auto& it {(++m, comp(*l_first, *r_first)) ? l_first : r_first};
+			*first = std::move(*it); ++n;
+			++it;
+		}
 	}
-	std::move(l_first, mid, std::back_inserter(merged));
-	std::move(r_first, last, std::back_inserter(merged));
-	std::move(std::begin(merged), std::end(merged), first);
 }
 
 template <class RandomAccessIterator, class Compare>
@@ -32,8 +36,7 @@ merge_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp)
 			std::next(_first, i) < last; _first = _last, std::advance(_last, i * 2)) {
 			if (_last > last)
 				_last = last;
-			auto mid {std::next(_first, i)};
-			merge(_first, mid, _last, comp, m, n);
+			merge(_first, _last, i, comp, m, n);
 		}			
 		std::cout << i * 2 << ": ";
 		std::copy(first, last, std::ostream_iterator<int>{std::cout, "\t"});
