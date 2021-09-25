@@ -1,115 +1,123 @@
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
+#include "../include/test_cpu/cpuinfo.h"
+#include "../include/test_cpu/test_cpu.h"
+#include "../include/csv.h"
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdio.h>
 
-#define OPERAND_TYPE 	  double
-#define OPERAND_TYPE_S "double"
-#define TIMER_S        "clock"
+#define MAX_BUFFER_SIZE 64
 #define MIN_N_LAUNCH    10
-#define UPPER           2000
-#define DOWN            1000
+#define FORMAT 					"%s;%s;%s;%s;%d;rdtsc;%.8f;%zu;%.8f;%.8f;%.8f%%;%.8f\n"
 
-double* buf;
-FILE* csvtab;
-char processor_model[50], filename[20], optimizations[20];
-size_t nlaunch;
-
-void test(const char* task_name, OPERAND_TYPE (*task)(OPERAND_TYPE))
-{
-	double average = 0.0;
-	for (size_t i = 0; i < nlaunch; ++i) {
-		const OPERAND_TYPE operand = rand() % UPPER - DOWN;
-		const clock_t start = clock();
-		task(operand);
-		const clock_t finish = clock();
-		average += (buf[i] = (double)((finish - start)) / CLOCKS_PER_SEC);
-	}
-	average /= nlaunch;
-	for (size_t i = 0; i < nlaunch; ++i) {
-		fprintf(csvtab, "%s;%s;%s;%s;%u;%s;%f;%u;%f;%f;%f;%f\n", processor_model, 
-														 									 				 			 task_name, 
-														 									 				 			 OPERAND_TYPE_S,
-														 									 				 			 optimizations, 
-														 									 							 nlaunch,
-														 									 				 			 TIMER_S,
-																							 				 			 buf[i], 
-														 									 				 			 i + 1,
-					 																		 				 			 average,
-																							 				 			 0.0,
-																							 				 			 0.0,
-																							 				 			 0.0);
-	}
-}
+void write_csv(FILE*, const char*, const char*, const char*, const char*, struct statistics*);
 
 int main(int argc, char* argv[])
 {
-	if (argc > 1)	{
+	int typeid = -1;
+	struct statistics stats = {MIN_N_LAUNCH, NULL, 0.0, 0.0, 0.0, 0.0};
+	char operand_type[MAX_BUFFER_SIZE]  = "double", 
+			 optimizations[MAX_BUFFER_SIZE] = "None";
+	if (argc > 1) {
 		char* end;
-		nlaunch = strtoul(argv[1], &end, 10);
-		if (*end) {
-			fprintf(stderr, "Невозможно конвертировать %s в число\n", argv[1]);
-			return EXIT_FAILURE;
+		size_t pos = 0;
+		while (--argc > 0) {
+			if (typeid == -1 && strcmp(argv[argc], "float") == 0) {
+				typeid = FLOAT;
+				strcpy(operand_type, "float");
+			} else if (typeid == -1 && strcmp(argv[argc], "long double") == 0) {
+				typeid = LONG_DOUBLE;
+				strcpy(operand_type, "long double");
+			} else if (typeid == -1 && strcmp(argv[argc], "double") == 0) { 
+				typeid = DOUBLE;
+				strcpy(operand_type, "double");
+			} else if (strncmp(argv[argc], "-O", 2) == 0) {
+				int size = strlen(argv[argc]);
+				for (int i = 2; i < size; ++i) {
+					if (isdigit(argv[argc][i]) == 0) {
+						fprintf(stderr, "Неверный аргумент: %s\n", argv[argc]);
+						return EXIT_FAILURE;
+					}
+				}
+				memcpy(optimizations + pos, argv[argc], size);
+				pos += size + 1;
+				optimizations[pos - 1] = ' ';
+				if (pos > MAX_BUFFER_SIZE) {
+					fprintf(stderr, "Слишком много ключей оптимизации\n");
+					return EXIT_FAILURE;
+				}
+			} else {
+				const size_t num = strtoul(argv[argc], &end, 10);
+				if (*end != '\0') {
+					fprintf(stderr, "Неверный аргумент: %s\n", argv[argc]);
+					return EXIT_FAILURE;
+				}
+				if (stats.nlaunch == MIN_N_LAUNCH && num > MIN_N_LAUNCH)
+					stats.nlaunch = num;
+			}
 		}
-	} else {
-		nlaunch = MIN_N_LAUNCH;
-	}
-
-	FILE* grep = popen("cat makefile | grep -oP \'FLAGS=\\s*\\K.+\'", "r");
-	if (grep == NULL) {
-		fprintf(stderr, "Невозможно получить ключи оптимизации или отсутствует makefile\n");
+		if (pos > 0)
+			optimizations[pos - 1] = '\0';
+	}		
+	if (typeid == -1)
+		typeid = DOUBLE;
+	if ((stats.launch_time = malloc(stats.nlaunch * sizeof *stats.launch_time)) == NULL) {
+		fprintf(stderr, "Не удалось выделить память\n");
+		return EXIT_FAILURE;
+	}	
+	char processor_model_name[MAX_BUFFER_SIZE];
+	if (get_processor_model_name(processor_model_name, sizeof(processor_model_name)) == -1) {
+		fprintf(stderr, "Не удалось получить модель процессора\n");
 		return EXIT_FAILURE;
 	}
-	fgets(optimizations, sizeof(optimizations), grep);
-	pclose(grep);
-	if (*optimizations != '\0')
-		*strchr(optimizations, '\n') = '\0';
-	else
-		strcpy(optimizations, "None");
-
-	buf = malloc(sizeof(*buf) * nlaunch);
-	if (buf == NULL) {
-		fprintf(stderr, "Невозможно выделить память под буффер\n");
-		return EXIT_SUCCESS;
-	}
-
-	grep = popen("lscpu | grep -oP \'Имя модели:\\s*\\K.+\'", "r");
-	if (grep == NULL) {
-		perror("Невозможно запустить lscpu или grep");
+	double max_clock_frequency;
+	if (get_max_clock_frequency(&max_clock_frequency) == -1) {
+		fprintf(stderr, "Не удалось получить максимальную тактовую частоту процессора\n");
 		return EXIT_FAILURE;
 	}
-	fgets(processor_model, sizeof(processor_model), grep);
-	*strchr(processor_model, '\n') = '\0';
-	pclose(grep);
-	
-	printf("Введите имя .csv файла: ");
-	const size_t n = sizeof(filename) - 1;
-	ssize_t i = 0, dot_idx = -1;
-	for (int c; (c = getchar()) != EOF && i < n; ++i) {
-		if (c == '.')
-			dot_idx = i;
-		if (c == '\n')
-			break;
-		filename[i] = c;
-	}
-	filename[i] = '\0';
-	if (strcmp(filename + dot_idx + 1, "csv") != 0) {
-		perror("Расширение должно быть .csv");
+	char csv_filename[MAX_BUFFER_SIZE];
+	printf("ВВедите имя .csv файла: ");
+	if (get_csv_filename(csv_filename, sizeof(csv_filename)) == -1) {
+		fprintf(stderr, "Некорректное имя: %s\n", csv_filename);
 		return EXIT_FAILURE;
 	}
-	
-	csvtab = fopen(filename, "w");
-	if (csvtab == NULL) {
-		fprintf(stderr, "Невозможно открыть %s\n", filename);
+	FILE* csv_file;
+	if ((csv_file = fopen(csv_filename, "w")) == NULL) {
+		fprintf(stderr, "Не удалось открыть %s\n", csv_filename);
 		return EXIT_FAILURE;
 	}
-	
-	srand(time(NULL));
-
-	test("sin", sin);
-	test("cos", cos);
-	test("tan", tan);	
+	test_cpu(&stats, max_clock_frequency, typeid, SIN); 
+	write_csv(csv_file, processor_model_name, operand_type, "sin", optimizations, &stats);
+	test_cpu(&stats, max_clock_frequency, typeid, COS);
+	write_csv(csv_file, processor_model_name, operand_type, "cos", optimizations, &stats);
+	test_cpu(&stats, max_clock_frequency, typeid, TAN);
+	write_csv(csv_file, processor_model_name, operand_type, "tan", optimizations, &stats);
+	FILE* gp;
+	if ((gp = popen("gnuplot -p", "w")) == NULL) {
+		fprintf(stderr, "Невозможно открыть gnuplot\n");
+		return EXIT_FAILURE;
+	}
+	fprintf(gp, "%s\n", "set boxwidth 0.5");
+	fprintf(gp, "%s\n", "set style fill solid");
+	fprintf(gp, "%s\n", "set datafile separator \";\"");
 	
 	return EXIT_SUCCESS;
+}
+
+void write_csv(FILE* csv_file, const char* processor_model_name, 
+	const char* operand_type, const char* task, const char* optimizations, struct statistics* stats)
+{
+	for (size_t i = 0; i < stats->nlaunch; ++i)
+		fprintf(csv_file, FORMAT, processor_model_name,
+												 			task,
+												 			operand_type,
+												 			optimizations,
+												 			1,
+												 			stats->launch_time[i],
+												 			i + 1,
+												 			stats->average_time,
+												 			stats->absolute_error,
+												 			stats->relative_error,
+												 			stats->task_perfomance
+					 );
 }
