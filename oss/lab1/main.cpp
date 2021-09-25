@@ -130,6 +130,8 @@ int main()
 		std::cout << "3 - Поиск в списке\n";
 		std::cout << "4 - Cохранить списов в файл\n";
 		std::cout << "5 - Загрузить список из файла\n";
+		std::cout << "6 - Добавить студента\n";
+		std::cout << "7 - Удалить студента\n";
 		std::cout << "0 - Выход\n";
 		char button; std::cin >> button;
 		std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -219,6 +221,20 @@ int main()
 				student_info si;
 				for (std::size_t i {}; file.read(reinterpret_cast<char*>(&si), sizeof(student_info)); ++i)
 					l.insert(si, i);
+				break;
+			} case '6' : {
+				std::cout << "Введите номер: ";
+				std::size_t pos; std::cin >> pos; --pos;
+				std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				std::cout << "Введите данные: ";
+				student_info si; std::cin >> si.first >> si.second;
+				std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				l.insert(si, pos);
+				break;
+			} case '7' : {
+				std::cout << "Введите номер: ";
+				std::size_t pos; std::cin >> pos; --pos;
+				l.erase(pos);
 			}
 		}
 	}
