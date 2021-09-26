@@ -8,7 +8,7 @@
 
 #define MAX_BUFFER_SIZE 64
 #define MIN_N_LAUNCH    10
-#define FORMAT 					"%s;%s;%s;%s;%d;rdtsc;%.8f;%zu;%.8f;%.8f;%.8f%%;%.8f\n"
+#define FORMAT 					"%s,%s,%s,%s,%d,rdtsc,%.8f,%zu,%.8f,%.8f,%.8f%%,%.8f\n"
 
 void write_csv(FILE*, const char*, const char*, const char*, const char*, struct statistics*);
 
@@ -92,15 +92,35 @@ int main(int argc, char* argv[])
 	write_csv(csv_file, processor_model_name, operand_type, "cos", optimizations, &stats);
 	test_cpu(&stats, max_clock_frequency, typeid, TAN);
 	write_csv(csv_file, processor_model_name, operand_type, "tan", optimizations, &stats);
-	FILE* gp;
-	if ((gp = popen("gnuplot -p", "w")) == NULL) {
-		fprintf(stderr, "Невозможно открыть gnuplot\n");
+	fclose(csv_file);
+	FILE* temp, *pipe;
+	if ((temp = fopen("temp.txt", "w")) == NULL) {
+		fprintf(stderr, "Не удалось создать временный файл\n");
 		return EXIT_FAILURE;
 	}
-	fprintf(gp, "%s\n", "set boxwidth 0.5");
-	fprintf(gp, "%s\n", "set style fill solid");
-	fprintf(gp, "%s\n", "set datafile separator \";\"");
-	
+	char pipe_command[MAX_BUFFER_SIZE]; sprintf(pipe_command, "cat %s | gawk -F \',\' \'{printf $2\"\\t\"$12\"\\n\"}\' | uniq", csv_filename);
+	if ((pipe = popen(pipe_command, "r")) == NULL) {
+		fprintf(stderr, "Не удалось открыть cat, gawk или uniq\n");
+		return EXIT_FAILURE;
+	}
+	for (int i = 0; feof(pipe) == 0; ++i)
+		if (fgets(pipe_command, MAX_BUFFER_SIZE, pipe) != NULL)
+			fprintf(temp, "%d\t%s\n", i, pipe_command);
+	pclose(pipe);
+	fclose(temp);
+	FILE* gp;
+	if ((gp = popen("gnuplot -p", "w")) == NULL) {
+		fprintf(stderr, "Не удалось открыть gnuplot\n");
+		return EXIT_FAILURE;
+	}
+	fprintf(gp, "set boxwidth 0.5\n");
+	fprintf(gp, "set style fill solid\n");
+	fprintf(gp, "plot 'temp.txt' using 1:3:xtic(2) with boxes title 'operand type: %s'\n", operand_type);
+	pclose(gp);
+	if (remove("temp.txt") != 0) {
+		fprintf(stderr, "Не удалось удалить временный файл\n");
+		return EXIT_FAILURE;
+	}
 	return EXIT_SUCCESS;
 }
 
