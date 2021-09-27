@@ -9,24 +9,24 @@
 
 int main()
 {
-	
-	pid_t* processes;
-	if ((processes = malloc(PROCESSES_COUNT * sizeof *processes)) == NULL) {
-		return EXIT_FAILURE;
-	}
-	*processes = getpid();
+	pid_t ppid, pid;
+	ppid = getpid();
 	for (size_t i = 1; i < PROCESSES_COUNT; ++i) {
-		processes[i] = fork();
-		if (processes[i] == 0)
-			waitpid(*processes, NULL, 0);
+		pid = fork();
+		if (pid == 0) {
+			waitpid(ppid, NULL, 0);
+			break;
+		} else {
+			printf("pid: %d\n", pid);
+		}
 	}
-	if (getpid() != *processes) 
+	if (getpid() != ppid) 
 		return EXIT_SUCCESS;
 	system("pstree | grep prog1"); puts("");
 	char command[MAX_COMMAND_SIZE];
-	for (size_t i = 0; i < PROCESSES_COUNT; ++i) {
-		sprintf(command, "ls /proc/%d/task/*", processes[i]);
-		printf("pid %d:\n", processes[i]); system(command); puts("");
-	}
+	sprintf(command, "cat /proc/%d/task/%d/children", (int)ppid, (int)ppid);
+	printf("ppid: %d\n", ppid);
+	system(command); puts("");
+	while (1);
 	return EXIT_SUCCESS;
 }

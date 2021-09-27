@@ -9,6 +9,7 @@ int main()
 	if ((child_pid = fork()) == 0) {
 		while (1);
 	} else {
+		printf("child pid: %d\n", child_pid);
 		system("ps | grep \"prog\"");
 		kill(getpid(), SIGTERM);
 	}
