@@ -11,6 +11,5 @@ struct operations_number
 
 struct operations_number stupid_column_multiplication(const unsigned*, const unsigned*, unsigned*, size_t, size_t, size_t);
 struct operations_number fast_multiplication(const unsigned*, const unsigned*, unsigned*, size_t, size_t);
-struct void very_fast_multiplication(const unsigned*, const unsigned*, unsigned*, size_t, size_t);
 
 #endif // __MULTIPLICATION_H__

@@ -5,7 +5,7 @@
 #define NEGATIVE 1
 #define POSITIVE 0
 
-int get_bigint(unsigned short* bi, size_t num, int* negative)
+int get_bigint(unsigned* bi, size_t num, int* negative)
 {
 	*negative = POSITIVE;
 	int ch;
@@ -25,7 +25,7 @@ int get_bigint(unsigned short* bi, size_t num, int* negative)
 	return 0;
 }
 
-void print_bigint(const unsigned short* bi, size_t digits, int negative)
+void print_bigint(const unsigned* bi, size_t digits, int negative)
 {
 	if (negative == NEGATIVE)
 		printf("-");

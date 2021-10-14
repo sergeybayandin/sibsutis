@@ -119,9 +119,3 @@ fast_multiplication(const unsigned* a, const unsigned* b, unsigned* c, size_t ab
 	__carry(c, cdigits);
 	return on;
 }
-
-void very_fast_multiplication(const unsigned* a, const unsigned* b, unsigned* c,
-	size_t abdigits, size_t cdigits)
-{
-	
-}

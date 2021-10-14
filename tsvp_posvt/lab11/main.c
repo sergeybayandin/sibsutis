@@ -1,24 +1,40 @@
 #include "../include/multiplication.h"
+#include "../include/iobigint.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#define N 5
-#define M 5
-
 int main()
 {
-	size_t i;
-	unsigned a[N], b[M], c[N + M];
-	
-	for (i = 0; i < N; ++i) 
-		a[i] = 9;
-	for (i = 0; i < M; ++i)
-		b[i] = 9;
-	
-	struct operations_number on = stupid_column_multiplication(a, b, c, N, M, N + M);
+	size_t anum, bnum, cnum;
+	printf("Enter n, m: "); scanf("%zu %zu", &anum, &bnum); getchar();
+	cnum = anum + bnum;
+	unsigned* a, *b, *c;
+	if ((a = malloc(anum * sizeof *a)) == NULL ||
+				(b = malloc(bnum * sizeof *b)) == NULL ||
+					(c = malloc(cnum * sizeof *c)) == NULL) {
+		fprintf(stderr, "Cannot allocate memory\n");
+		return EXIT_FAILURE;
+	}
+	int anegative = 0, bnegative = 0;
+	if (get_bigint(a, anum, &anegative) != 0) {
+		fprintf(stderr, "Input failed\n");
+		return EXIT_FAILURE;
+	}
+	getchar();
+	if (get_bigint(b, bnum, &bnegative) != 0) {
+		fprintf(stderr, "Input failed\n");
+		return EXIT_FAILURE;
+	}
+ 	struct operations_number on = stupid_column_multiplication(a, b, c, anum, bnum, cnum);
 	printf("T(n) = %zu + %zu = %zu\n", on.multiplications, on.additions, on.multiplications + on.additions);
-	for (i = 0; i < N + M; ++i)
-		printf("%u\t", c[i]);
+	print_bigint(a, anum, anegative); 
+	printf(" * "); 
+	print_bigint(b, bnum, bnegative);
+	printf(" = ");
+	if (*c != 0)
+		print_bigint(c, cnum, anegative + bnegative);
+	else
+		print_bigint(c + 1, cnum - 1, anegative + bnegative);
 	puts("");
 	return EXIT_SUCCESS;
 }
