@@ -1,2 +1,3 @@
+SRC=../src/multiplication.c main.c
 all:
-	g++ -std=c++1z -o prog main.cpp && ./prog
+	gcc -o prog $(SRC) && ./prog

@@ -1,15 +1,20 @@
-#include "../../include/tsvp_posvt/convolution.h"
+#include "../include/convolution.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-size_t default_convolution(const int* a, const int* b, int* c, size_t num)
+size_t default_convolution(const int* a, const int* b, int* c, size_t abnum, size_t cnum)
 {
-	size_t n = 0;
-	for (size_t i = 0; i < num; ++i) {
+	size_t n = 0, i, j;
+	for (i = 0; i < abnum; ++i) {
 		c[i] = 0;
-    for (size_t j = 0; j <= i; ++j, ++n)
-      c[i] += a[j] * b[i - j];
+		for (j = 0; j <= i; ++j, ++n)
+			c[i] += a[j] * b[i - j];
+	}
+	for (; i < cnum; ++i) {
+		c[i] = 0;
+		for (j = i - abnum + 1; j < abnum; ++j, ++n)
+			c[i] += a[j] * b[i - j];
 	}
 	return n;
 }
@@ -30,7 +35,7 @@ size_t cft_convolution(const carray_t a, const carray_t b, carray_t c, size_t nu
 	}
 	n += ft(a, fa, num);
 	n += ft(b, fb, num);
-	for (size_t i = 0; i < num; ++i)
+	for (size_t i = 0; i < num; ++i, n += 2)
 		fc[i] = num * fa[i] * fb[i];
 	free(fa); free(fb);
 	n += ift(fc, c, num);

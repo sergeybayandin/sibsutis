@@ -1,3 +1,3 @@
-SRC=../src/tsvp_posvt/convolution.c ../src/tsvp_posvt/iocomplex.c ../src/tsvp_posvt/fourier_transform.c main.c
+SRC=../src/convolution.c ../src/iocomplex.c ../src/fourier_transform.c main.c
 all:
 	gcc -lm -o prog $(SRC) && ./prog
