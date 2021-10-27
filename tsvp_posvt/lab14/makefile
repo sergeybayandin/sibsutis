@@ -1,2 +1,3 @@
+SRC=main.c ../src/shortest_paths.c ../src/mvector.c ../src/binary_heap.c
 all:
-	gcc -lm -o prog main.c && ./prog
+	gcc -o prog $(SRC)

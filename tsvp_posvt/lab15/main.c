@@ -13,7 +13,7 @@ int main()
 		fprintf(stderr, "Cannot allocate memory\n");
 		return EXIT_FAILURE;
 	}
-	size_t i, j, a, b, m;
+	size_t i, j, a, m;
 	struct wvertex* pwv;
 	struct mvector* pmv = MV_MEMORY(&g);
 	for (i = 0; i < n; ++i) {
@@ -27,15 +27,15 @@ int main()
 		for (j = 0; j < m; ++j)
 			scanf("%zu %d", &pwv[j].v, &pwv[j].w);
 	}
-	puts("");
-	int* pd;
-	if ((pd = malloc(n * sizeof *pd)) == NULL) {
+	int* d;
+	if ((d = malloc(n * sizeof *d)) == NULL) {
 		fprintf(stderr, "Cannot allocate memory\n");
 		return EXIT_FAILURE;
 	}
-	shortest_paths_ford_bellman(pd, &g, v);
+	puts("");
+	shortest_paths_dijkstra(d, &g, v);
 	for (i = 0; i < n; ++i)
 		if (i != v)
-			printf("%zu --- %zu : %d\n", v, i, pd[i]);
+			printf("%zu --- %zu : %d\n", v, i, d[i]);
 	return EXIT_SUCCESS;
 }
