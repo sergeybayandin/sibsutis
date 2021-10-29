@@ -31,22 +31,13 @@ int main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	double** amtx, **bmtx, **cmtx;
-	if ((amtx = malloc(n * sizeof *amtx)) == NULL ||
-				(bmtx = malloc(n * sizeof *bmtx)) == NULL ||
-					(cmtx = malloc(n * sizeof *cmtx)) == NULL) {
+	double* amtx, *bmtx, *cmtx;
+	if ((amtx = malloc(n * n * sizeof *amtx)) == NULL ||
+				(bmtx = malloc(n * n * sizeof *bmtx)) == NULL ||
+					(cmtx = malloc(n * n * sizeof *cmtx)) == NULL) {
 		fprintf(stderr, "Unable to allocate memory\n");
 		return EXIT_FAILURE;
 	}
-	size_t i;
-	for (i = 0; i < n; ++i) {
-		if ((amtx[i] = malloc(n * sizeof **amtx)) == NULL ||
-					(bmtx[i] = malloc(n * sizeof **bmtx)) == NULL ||
-						(cmtx[i] = malloc(n * sizeof **cmtx)) == NULL) {
-			fprintf(stderr, "Unable to allocate memory\n");
-			return EXIT_FAILURE;
-		}
-	}
-	dgemm_o0(amtx, bmtx, cmtx, n);
+	
 	return EXIT_SUCCESS;
 }
