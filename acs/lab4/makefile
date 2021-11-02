@@ -1,3 +1,3 @@
-SRC=main.c ../src/blas.c
+SRC=../src/blas.c ../src/test_cpu/cpuinfo.c ../src/timer.c
 all:
-	gcc -o prog $(SRC)
+	gcc -Wall -o prog main.c

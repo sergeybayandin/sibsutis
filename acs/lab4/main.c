@@ -1,60 +1,73 @@
-#include "../include/blas.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <mmintrin.h> /* MMX */
-#include <xmmintrin.h> /* SSE, нужен также mmintrin.h */
-#include <emmintrin.h>
-
-#define DEFAULT_SIZE 512
+#define MAX_BUFFER_SIZE 64
+#define MAX_ARGS_COUNT 	5
+#define MIN_ARGS_COUNT 	3
+#define DEFAULT_N 	   	1024
+#define DEFAULT_BS		 	2
+#define FILENAME			 	"stats.txt"
 
 int main(int argc, char* argv[])
 {
-	size_t n = DEFAULT_SIZE;
+	size_t n = DEFAULT_N, bs = DEFAULT_BS;
 	if (argc > 1) {
-		if (argc < 3) {
-			fprintf(stderr, "Missing arguments\n");
-			return EXIT_FAILURE;
-		}
-		if (argc > 3) {
+		if (argc > MAX_ARGS_COUNT) {
 			fprintf(stderr, "Too many arguments\n");
 			return EXIT_FAILURE;
 		}
-		char* p;
-		const char* cmd = argv[1];
-		const char* arg = argv[2];
-		if (strcmp("-n", cmd) == 0) {
-			n = strtoull(arg, &p, 10);
-			if (*p != '\0' || p == NULL) {
-				fprintf(stderr, "Wrong value: %s\n", arg);
-				return EXIT_FAILURE;
-			}
-		} else {
-			fprintf(stderr, "Unknown command: %s\n", cmd);
+		if (argc < MIN_ARGS_COUNT) {
+			fprintf(stderr, "Missing arguments\n");
 			return EXIT_FAILURE;
 		}
+		int i;
+		char* p;
+		for (i = 1; i < argc; i += 2) {
+			if (i + 1 >= argc) {
+				fprintf(stderr, "Missing arguments: %s\n", argv[i]);
+				return EXIT_FAILURE;
+			}
+			if (strcmp("-n", argv[i]) == 0) {
+				n = strtoull(argv[i + 1], &p, 10);
+				if (*p != '\0' || p == NULL) {
+					fprintf(stderr, "%s: wrong argument: %s\n", argv[i], argv[i + 1]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp("-bs", argv[i]) == 0) {
+				bs = strtoull(argv[i + 1], &p, 10);
+				if (*p != '\0' || p == NULL) {
+					fprintf(stderr, "%s: wrong argument: %s\n", argv[i], argv[i + 1]);
+					return EXIT_FAILURE;
+				}
+			} else {
+				fprintf(stderr, "Unknown command: %s\n", argv[i]);
+				return EXIT_FAILURE;
+			}
+		}
 	}
-	double* amtx, *bmtx, *cmtx;
-	if ((amtx = malloc(n * n * sizeof *amtx)) == NULL ||
-				(bmtx = malloc(n * n * sizeof *bmtx)) == NULL ||
-					(cmtx = malloc(n * n * sizeof *cmtx)) == NULL) {
-		fprintf(stderr, "Unable to allocate memory\n");
+	if ((n % bs) != 0) {
+		fprintf(stderr, "n %% bs != 0\n");
 		return EXIT_FAILURE;
 	}
-	size_t i, j;
-	puts("a:");
-	for (i = 0; i < n; ++i)
-		for (j = 0; j < n; ++j)
-			scanf("%lf", &amtx[i * n + j]);	
-	puts("b:");
-	for (i = 0; i < n; ++i)
-		for (j = 0; j < n; ++j)
-			scanf("%lf", &bmtx[i * n + j]);
-	dgemm_o3_sse(amtx, bmtx, cmtx, n);
-	puts("\nc:");
-	for (i = 0; i < n; ++i, puts(""))
-		for (j = 0; j < n; ++j)
-			printf("%f\t", cmtx[i * n + j]);
-	return EXIT_SUCCESS;
+	char buffer[MAX_BUFFER_SIZE];
+	sprintf(buffer, "perf stat -e cache-misses %s %zu", "./dgemm_o0", n);
+	system(buffer);	
+	sprintf(buffer, "perf stat -e cache-misses %s %zu", "./dgemm_o1", n);
+	system(buffer);	
+	sprintf(buffer, "perf stat -e cache-misses %s %zu %zu", "./dgemm_o2", n, bs);
+	system(buffer);	
+	sprintf(buffer, "perf stat -e cache-misses %s %zu", "./dgemm_o3", n);
+	system(buffer);
+	FILE* gp;
+	if ((gp = popen("gnuplot -p", "w")) == NULL) {
+		fprintf(stderr, "Failed to open gnuplot\n");
+		return EXIT_FAILURE;
+	}
+	fprintf(gp, "set boxwidth 0.5\n");
+	fprintf(gp, "set style fill solid\n");
+	fprintf(gp, "plot '%s' using 1:3:xtic(2) with boxes title '-n = %zu, -bs = %zu'\n", FILENAME, n, bs);
+	pclose(gp);
+	remove(FILENAME);
+	return EXIT_FAILURE;
 }
