@@ -27,15 +27,24 @@ int main()
 		for (j = 0; j < m; ++j)
 			scanf("%zu %d", &pwv[j].v, &pwv[j].w);
 	}
-	int* d;
-	if ((d = malloc(n * sizeof *d)) == NULL) {
+	int* pd, *pp, *pst;
+	if ((pd = malloc(n * sizeof *pd)) == NULL ||
+				(pp = malloc(n * sizeof *pp)) == NULL ||
+					(pst = malloc(n * sizeof *pst)) == NULL) {
 		fprintf(stderr, "Cannot allocate memory\n");
 		return EXIT_FAILURE;
 	}
 	puts("");
-	shortest_paths_dijkstra(d, &g, v);
-	for (i = 0; i < n; ++i)
-		if (i != v)
-			printf("%zu --- %zu : %d\n", v, i, d[i]);
+	shortest_paths_dijkstra(pd, pp, &g, v);
+	for (i = 0, m = 0; i < n; ++i) {
+		if (i == v)
+			continue;
+		pst[m++] = i;
+		for (j = i; pp[j] != j; j = pp[j])
+			pst[m++] = pp[j];
+		for (--m; m > 0; --m)
+			printf("%d -- ", pst[m]);
+		printf("%d : %d\n", pst[m], pd[i]);
+	}
 	return EXIT_SUCCESS;
 }

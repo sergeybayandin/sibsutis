@@ -28,14 +28,24 @@ int main()
 			scanf("%zu %d", &pwv[j].v, &pwv[j].w);
 	}
 	puts("");
-	int* pd;
-	if ((pd = malloc(n * sizeof *pd)) == NULL) {
+	int* pd, *pp, *pst;
+	if ((pd = malloc(n * sizeof *pd)) == NULL ||
+				(pp = malloc(n * sizeof *pp)) == NULL ||
+					(pst = malloc(n * sizeof *pst)) == NULL) {
 		fprintf(stderr, "Cannot allocate memory\n");
 		return EXIT_FAILURE;
 	}
-	shortest_paths_ford_bellman(pd, &g, v);
-	for (i = 0; i < n; ++i)
-		if (i != v)
-			printf("%zu --- %zu : %d\n", v, i, pd[i]);
+	pp[v] = v;
+	shortest_paths_ford_bellman(pd, pp, &g, v);
+	for (i = 0, m = 0; i < n; ++i) {
+		if (i == v)
+			continue;
+		pst[m++] = i;
+		for (j = i; pp[j] != j; j = pp[j])
+			pst[m++] = pp[j];
+		for (--m; m > 0; --m)
+			printf("%d -- ", pst[m]);
+		printf("%d : %d\n", pst[m], pd[i]);
+	}
 	return EXIT_SUCCESS;
 }
