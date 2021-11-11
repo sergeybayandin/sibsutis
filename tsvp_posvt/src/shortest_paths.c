@@ -1,73 +1,89 @@
 #include "../include/shortest_paths.h"
 #include "../include/mv_algorithm.h"
 #include "../include/binary_heap.h"
-#include <limits.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-size_t* pi;
-const int* pdist;
+int *pdist;
+size_t *ppos;
 
-int __less(const size_t* ai, const size_t* bi)
+int __less(const size_t *a, const size_t *b)
 {
-	const size_t v0 = *ai, v1 = *bi;
-	const int res = pdist[v0] - pdist[v1];
-	if (res < 0) {
-		size_t t = pi[v0];
-		pi[v0] = pi[v1];
-		pi[v1] = t;
-	}
-	return res;
+	return pdist[*a] - pdist[*b];
 }
 
-void __decrease_key(void*, const void*) {}
-
-void shortest_paths_dijkstra(int* pd, int* pp, const adjacency_list_t* pg, size_t v)
+void __swap(size_t *a, size_t *b)
 {
-	int w;
-	const struct wvertex* pwv_v;
-	struct binary_heap bh, *pbh = &bh;
-	size_t i, m, n = MV_NUM(pg), *ps;
-	struct mvector* pmv_heap = &bh.mv_heap, *pmv_g = MV_MEMORY(pg), *pmv_v;
-	if ((pi = malloc(n * sizeof *pi)) == NULL)
+	size_t t = *a;
+	*a = *b;
+	*b = t;
+	t = ppos[*a];
+	ppos[*a] = ppos[*b];
+	ppos[*b] = t;
+}
+
+void __decrease_key(size_t *, const int *) {}
+
+#define __CAST_CMP_FUNC(pfunc) \
+	(int (*)(const void *, const void *))(pfunc)
+
+#define __CAST_SWP_FUNC(pfunc) \
+	(void (*)(void *, void *))(pfunc)
+
+#define __CAST_DK_FUNC(pfunc) \
+	(void (*)(void *, const void *))(pfunc)
+
+void shortest_paths_dijkstra(int *pd, size_t *pp, const adjacency_list_t* pg, int max_dist)
+{
+	size_t num = MV_NUM(pg);
+	if ((ppos = malloc(num * sizeof *ppos)) == NULL)
 		return;
-	if ((bh = bh_malloc(n, sizeof(size_t), 
-		(int (*)(const void*, const void*))__less, 
-			__decrease_key, NULL), MV_MEMORY(pmv_heap)) == NULL) {
-		free(pi);
+	struct binary_heap bh, *pbh = &bh;
+	const struct mvector *pmv_heap = &pbh->mv_heap;
+	if ((bh = bh_malloc(num, sizeof(size_t), __CAST_CMP_FUNC(__less), __CAST_SWP_FUNC(__swap),
+			__CAST_DK_FUNC(__decrease_key), NULL), MV_MEMORY(pmv_heap)) == NULL) {
+		free(ppos);
 		return;
 	}
-	memset(pd, CHAR_MAX, n * sizeof *pd); pd[v] = 0; 
-	for (i = 0, pdist = pd, ps = &i; i < n; ++i) {		
-		pi[i] = i;
+	size_t j, i, *ps;
+	for (i = 0, ps = &i, pdist = pd; i < num; ++i) {
+		ppos[i] = i;
 		bh_insert(pbh, ps);
-	}	
+	}
+	int w;
+	size_t v, k;	
+	const struct wvertex *pwv;
+	const struct mvector *pmv, *pmv_g = MV_MEMORY(pg);
 	for (ps = &v; MV_NUM(pmv_heap) != 0; ) {
-		bh_erase(pbh, 0, ps);
-		pmv_v = pmv_g + v; pwv_v = MV_MEMORY(pmv_v);
-		for (i = 0, m = MV_NUM(pmv_v); i < m; ++i) {
-			w = pwv_v[i].w + pd[v]; n = pwv_v[i].v;
-			if (pd[n] <= w)
+		bh_erase(pbh, 0, ps);	
+		if (pd[v] == max_dist)
+			continue;
+		pmv = pmv_g + v;
+		pwv = MV_MEMORY(pmv);
+		for (i = 0, num = MV_NUM(pmv); i < num; ++i) {
+			w = pd[v] + pwv[i].w;
+			k = pwv[i].v;
+			if (pd[k] <= w)
 				continue;
-			pd[n] = w;
-			pp[n] = v;
-			bh_decrease_key(pbh, pi[n], NULL);
+			pp[k] = v;
+			pd[k] = w;
+			bh_decrease_key(pbh, ppos[k], NULL);
 		}
 	}
-	bh_free(pbh); free(pi);
+	free(ppos);
+	bh_free(pbh);
 }
 
-void shortest_paths_ford_bellman(int* pd, int* pp, const adjacency_list_t* pg, size_t v)
+void shortest_paths_ford_bellman(int *pd, size_t *pp, const adjacency_list_t *pg, int max_dist)
 {
-	int relax = 1, w;
+	int not_relax = 1, w;
 	struct wvertex* pwv;
 	size_t i, j, k, n = MV_NUM(pg), m;
 	struct mvector* pmv_g = MV_MEMORY(pg), *pmv_v;
-	memset(pd, CHAR_MAX, n * sizeof *pd); pd[v] = 0;
-	while (relax != 0) {
-		relax = 0;
+	while (not_relax) {
+		not_relax = 0;
 		for (i = 0; i < n; ++i) {				
-			if (pd[i] == INT_MAX)
+			if (pd[i] == max_dist)
 				continue;
 			pmv_v = pmv_g + i;
 			pwv = MV_MEMORY(pmv_v);
@@ -77,7 +93,7 @@ void shortest_paths_ford_bellman(int* pd, int* pp, const adjacency_list_t* pg, s
 					continue;
 				pd[k] = w;
 				pp[k] = i;
-				relax = 1;
+				not_relax = 1;
 			}
 		}
 	}

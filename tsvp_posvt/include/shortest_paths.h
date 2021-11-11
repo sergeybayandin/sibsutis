@@ -5,7 +5,7 @@
 #include "adjacency_list.h"
 #include <stddef.h>
 
-void shortest_paths_dijkstra(int*, int*, const adjacency_list_t*, size_t);
-void shortest_paths_ford_bellman(int*, int*, const adjacency_list_t*, size_t);
+void shortest_paths_dijkstra(int *, size_t *, const adjacency_list_t *, int);
+void shortest_paths_ford_bellman(int *, size_t *, const adjacency_list_t *, int);
 
 #endif // __SHORTEST_PATHS_H__
