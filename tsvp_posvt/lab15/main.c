@@ -3,6 +3,7 @@
 #include "../include/shortest_paths.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 int main()
 {
@@ -27,7 +28,8 @@ int main()
 		for (j = 0; j < m; ++j)
 			scanf("%zu %d", &pwv[j].v, &pwv[j].w);
 	}
-	int* pd, *pp, *pst;
+	size_t *pp;
+	int *pd, *pst;
 	if ((pd = malloc(n * sizeof *pd)) == NULL ||
 				(pp = malloc(n * sizeof *pp)) == NULL ||
 					(pst = malloc(n * sizeof *pst)) == NULL) {
@@ -35,16 +37,30 @@ int main()
 		return EXIT_FAILURE;
 	}
 	puts("");
-	shortest_paths_dijkstra(pd, pp, &g, v);
+	for (i = 0; i < n; ++i)
+		pd[i] = INT_MAX;
+	for (i = 0; i < n; ++i)
+		pp[i] = n;
+	pd[v] = 0;
+	pp[v] = v;
+	if (MV_NUM(pmv + v) > 0)
+		shortest_paths_dijkstra(pd, pp, &g, INT_MAX);
 	for (i = 0, m = 0; i < n; ++i) {
 		if (i == v)
 			continue;
 		pst[m++] = i;
-		for (j = i; pp[j] != j; j = pp[j])
-			pst[m++] = pp[j];
+		if (pp[i] != n) {
+			for (j = i; pp[j] != j; j = pp[j])
+				pst[m++] = pp[j];
+		} else {
+			pst[m++] = v;
+		}
 		for (--m; m > 0; --m)
 			printf("%d -- ", pst[m]);
-		printf("%d : %d\n", pst[m], pd[i]);
+		if (pp[i] != n)
+			printf("%d : %d\n", pst[m], pd[i]);
+		else
+			printf("%d : %s\n", pst[m], "doesnt exist");
 	}
 	return EXIT_SUCCESS;
 }
