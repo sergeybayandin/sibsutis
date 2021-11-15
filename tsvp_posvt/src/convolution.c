@@ -34,8 +34,16 @@ size_t cft_convolution(const carray_t a, const carray_t b, carray_t c, size_t nu
 		return n;
 	}
 	n += ft(a, fa, num);
-	n += ft(b, fb, num);
-	for (size_t i = 0; i < num; ++i, n += 2)
+	size_t i;
+	puts("fa:");
+	for (i = 0; i < num; ++i)
+		printf("(%f, %f)\t", creal(fa[i]), cimag(fa[i]));
+	n += ft(b, fb, num);	
+	puts("\nfb:");
+	for (i = 0; i < num; ++i)
+		printf("(%f, %f)\t", creal(fb[i]), cimag(fb[i]));
+	puts("");
+	for (i = 0; i < num; ++i, n += 2)
 		fc[i] = num * fa[i] * fb[i];
 	free(fa); free(fb);
 	n += ift(fc, c, num);
