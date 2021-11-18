@@ -89,7 +89,7 @@ void shortest_paths_ford_bellman(int *pd, size_t *pp, const adjacency_list_t *pg
 			pwv = MV_MEMORY(pmv_v);
 			for (j = 0, m = MV_NUM(pmv_v); j < m; ++j) {
 				w = pd[i] + pwv[j].w; k = pwv[j].v;
-				if (pd[k] <= w)
+				if (pd[k] < w)
 					continue;
 				pd[k] = w;
 				pp[k] = i;
