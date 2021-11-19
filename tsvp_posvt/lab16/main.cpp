@@ -9,7 +9,7 @@ int main()
 	std::vector<std::pair<std::size_t, double>> things(nthings);
 	for (auto &[mi, ci] : things)
 		std::cin >> mi >> ci;
-	auto loot {backpack(m, things)};
+	auto loot {backpack_problem(m, things)};
 	for (const auto &[mi, ci] : loot)
 		std::cout << mi << '\t' << ci << '\n';
 	auto [weight, cost] {

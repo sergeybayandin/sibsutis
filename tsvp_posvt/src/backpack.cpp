@@ -1,10 +1,10 @@
 #include "../include/backpack.h"
 
 std::vector<std::pair<std::size_t, double>>
-backpack(std::size_t m, const std::vector<std::pair<std::size_t, double>> &things)
+backpack_problem(std::size_t m, const std::vector<std::pair<std::size_t, double>> &things)
 {
 	const auto cols {m + 1};
-	std::vector<double>	bps(cols * (things.size() + 1), {});
+	std::vector<double>	bps(cols * (std::size(things) + 1));
 	
 	auto bps_last  {std::end(bps)};
 	auto things_it {std::begin(things)};

@@ -5,6 +5,6 @@
 #include <utility>
 
 std::vector<std::pair<std::size_t, double>>
-backpack(std::size_t, const std::vector<std::pair<std::size_t, double>> &);
+backpack_problem(std::size_t, const std::vector<std::pair<std::size_t, double>> &);
 
 #endif // __BACKPACK_H__
