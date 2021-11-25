@@ -56,17 +56,20 @@ brackets_problem(const std::vector<std::size_t> &dims)
 	return { dp[n - 1], std::move(optimals) };
 }
 
-std::ostream &operator<<(std::ostream &out, const __brackets_observer &obs)
+std::ostream &operator<<(std::ostream &strm, const __brackets_observer &obs)
 {
+	std::string out;
 	obs.__show_brackets_recursive(
 		out, 
 		std::cend(obs.storage_) - 1, 
 		std::cbegin(obs.storage_)
 	);
-	return out;
+	std::reverse(std::begin(out), std::end(out));
+	strm << out;
+	return strm;
 }
 
-void __brackets_observer::__show_brackets_recursive(std::ostream &out, 
+void __brackets_observer::__show_brackets_recursive(std::string &out, 
 	auto last, auto first) const noexcept
 {
 	if (first > last)
@@ -74,7 +77,7 @@ void __brackets_observer::__show_brackets_recursive(std::ostream &out,
 	
 	const auto [la, lb] {*last};
 	
-	out << "(";
+	out += ")";
 
 	if (la != lb) {
 		__show_brackets_recursive(
@@ -83,7 +86,7 @@ void __brackets_observer::__show_brackets_recursive(std::ostream &out,
 			first
 		);
 	} else {
-		out << 'M' << la + 1;
+		out += std::to_string(la + 1) + std::string{'M'};
 	}
 	
 	if (first >= last)
@@ -98,10 +101,10 @@ void __brackets_observer::__show_brackets_recursive(std::ostream &out,
 			first
 		);
 	} else {
-		out << 'M' << ra + 1;
+		out += std::to_string(ra + 1) + std::string{'M'};
 	}
 	
-	out << ")";
+	out += "(";
 }
 
 auto

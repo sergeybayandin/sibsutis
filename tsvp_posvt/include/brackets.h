@@ -26,7 +26,7 @@ private:
   const complexity_type complexity_;
   const storage_type storage_;
 	
-	void __show_brackets_recursive(std::ostream &, auto, auto) const noexcept;
+	void __show_brackets_recursive(std::string &, auto, auto) const noexcept;
 	auto __find_optimal(auto, auto, std::size_t, std::size_t) const noexcept;
 };
 
