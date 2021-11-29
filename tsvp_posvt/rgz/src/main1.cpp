@@ -1,4 +1,4 @@
-#include "include/slow_multiplication.h"
+#include "../include/slow_multiplication.h"
 #include <cstdlib>
 #include <cerrno>
 #include <iostream>

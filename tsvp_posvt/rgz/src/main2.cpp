@@ -1,4 +1,4 @@
-#include "include/fast_multiplication.h"
+#include "../include/fast_multiplication.h"
 #include <iostream>
 
 int main(int argc, char *argv[])
