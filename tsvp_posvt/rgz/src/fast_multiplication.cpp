@@ -1,5 +1,4 @@
 #include "../include/fast_multiplication.h"
-#include <algorithm>
 
 namespace rgz
 {

@@ -28,8 +28,8 @@ namespace rgz
 				for (; row_first < row_last; ++row_first, col_it += n) {
 					*c_it += *row_first * *col_it;
 					++multiplications;
-					++additions;
 				}
+				++additions;
 				++c_it;
 			}
 			b_first = b.begin();
