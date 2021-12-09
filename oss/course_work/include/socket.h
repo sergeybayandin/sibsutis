@@ -73,14 +73,14 @@ namespace os
 		: sd_ {-1}
 	{}
 	
-	template <auto _Dn, class _Tp, class _Pc>
+	template <auto _Dn, auto _Tp, auto _Pc>
 	bool
 	unix_socket<_Dn, _Tp, _Pc>::close() noexcept
 	{
 		return ::close(sd_) >= 0;
 	}
 	
-	template <class _Dn, class _Tp, class _Pc>
+	template <auto _Dn, auto _Tp, auto _Pc>
 	unix_socket<_Dn, _Tp, _Pc>::~unix_socket() noexcept
 	{
 		close();

@@ -42,6 +42,14 @@ namespace os
 		};
 	};
 
+	struct <class _Tp, char sep = '.', std::size_t buff_size = 19>
+	struct inet_ntoa
+	{
+		
+	private:
+		static char buffer[buff_size];
+	};
+
 } // os
 
 #endif // __TR_H__
