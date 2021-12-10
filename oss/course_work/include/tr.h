@@ -4,6 +4,7 @@
 #include <bit>
 #include <utility>
 #include <limits>
+#include <cstdio>
 
 namespace os
 {
@@ -31,24 +32,33 @@ namespace os
 		}
 
 	} // details
+	
+	template <class _Tp>
+	constexpr _Tp hton(_Tp n)
+	{
+		return 
+			std::endian::native == std::endian::big
+			? n
+			: details::byteswap(n);
+	}
 
 	template <class _Tp>
-	struct htons
+	const char *inet_ntoa(_Tp n)
 	{
-		static constexpr auto value {
-			std::endian::native == std::endian::big
-			? _Tp::value
-			: details::byteswap(_Tp::value)
-		};
-	};
+		static char buff[45];
+		auto buff_first {buff};
+		auto
+			n_first {reinterpret_cast<unsigned char*>(&n)},
+			n_last {n_first + sizeof(_Tp)};
 
-	struct <class _Tp, char sep = '.', std::size_t buff_size = 19>
-	struct inet_ntoa
-	{
-		
-	private:
-		static char buffer[buff_size];
-	};
+		for (; n_first < n_last; ++n_first) {
+			buff_first +=
+				sprintf(buff_first, "%u.", static_cast<unsigned>(*n_first));
+		}
+		*(buff_first - 1) = '\0';
+
+		return buff;
+	}
 
 } // os
 
