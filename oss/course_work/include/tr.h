@@ -5,6 +5,7 @@
 #include <utility>
 #include <limits>
 #include <cstdio>
+#include <linux/if_ether.h>
 
 namespace os
 {
@@ -42,22 +43,32 @@ namespace os
 			: details::byteswap(n);
 	}
 
+	static char _buff[18];
+
 	template <class _Tp>
 	const char *inet_ntoa(_Tp n)
 	{
-		static char buff[45];
-		auto buff_first {buff};
-		auto
-			n_first {reinterpret_cast<unsigned char*>(&n)},
-			n_last {n_first + sizeof(_Tp)};
+		constexpr auto digits {
+			std::numeric_limits<unsigned char>::digits
+		};
+		sprintf(
+			_buff,
+			"%u.%u.%u.%u\0",
+			n & 0xff, (n >> digits) & 0xff, 
+			(n >> 2 * digits) & 0xff, (n >> 3 * digits) & 0xff
+		);
+		return _buff;
+	}
 
-		for (; n_first < n_last; ++n_first) {
-			buff_first +=
-				sprintf(buff_first, "%u.", static_cast<unsigned>(*n_first));
-		}
-		*(buff_first - 1) = '\0';
-
-		return buff;
+	template <class _Tp>
+	const char *eth_ntoa(const _Tp n[ETH_ALEN])
+	{
+		sprintf(
+			_buff,
+			"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\0",
+			n[0], n[1], n[2], n[3], n[4], n[5]
+		);
+		return _buff;
 	}
 
 } // os

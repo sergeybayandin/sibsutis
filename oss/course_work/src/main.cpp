@@ -1,11 +1,10 @@
 #include "socket.h"
 #include "sockios.h"
 #include "tr.h"
+#include "recv_msg_viewer.h"
 #include <iostream>
 #include <signal.h>
-#include <linux/ip.h>
 #include <iomanip>
-#include <linux/tcp.h>
 
 bool running = true;
 
@@ -98,7 +97,7 @@ int main(int argc, char *argv[])
 	}
 	
 	iphdr iph;
-	ethhdr ethh;
+	//ethhdr ethh;
 	char frame[ETH_FRAME_LEN];
 
 	std::cout << "\nsniffing...\n\n";
@@ -112,38 +111,30 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		
-		std::memcpy(&ethh, frame, ETH_HLEN);
-		std::memcpy(&iph, frame + ETH_HLEN, sizeof(iph));
-	
 		std::cout << i++ << ')' << '\n';
+		
+		os::recv_msg_viewer viewer {frame};
 
-		std::cout << "mac src: " 
-			<< std::hex 
-			<< static_cast<unsigned>(ethh.h_source[0]) << ':'
-			<< static_cast<unsigned>(ethh.h_source[1]) << ':'
-			<< static_cast<unsigned>(ethh.h_source[2]) << ':'
-			<< static_cast<unsigned>(ethh.h_source[3]) << ':'
-			<< static_cast<unsigned>(ethh.h_source[4]) << ':'
-			<< static_cast<unsigned>(ethh.h_source[5]) << '\n';		
-		std::cout << "mac dest: " 
-			<< static_cast<unsigned>(ethh.h_dest[0]) << ':'
-			<< static_cast<unsigned>(ethh.h_dest[1]) << ':'
-			<< static_cast<unsigned>(ethh.h_dest[2]) << ':'
-			<< static_cast<unsigned>(ethh.h_dest[3]) << ':'
-			<< static_cast<unsigned>(ethh.h_dest[4]) << ':'
-			<< static_cast<unsigned>(ethh.h_dest[5]) << '\n' << std::dec;
+		auto ip_hdr {
+			viewer.ip_hdr()
+		};
 
-		std::cout << "ip src: " << os::inet_ntoa(iph.saddr) << '\n';
-		std::cout << "ip dest: " << os::inet_ntoa(iph.daddr) << "\n";
+		auto eth_hdr {
+			viewer.eth_hdr()
+		};
+		
+		std::cout << "mac:\t" << os::eth_ntoa(eth_hdr->get_source_address());
+		std::cout << std::setw(50) << os::eth_ntoa(eth_hdr->get_destination_address()) << '\n';
 
-		if (iph.protocol == IPPROTO_TCP) {
-			auto tcph {
-				reinterpret_cast<tcphdr*>(frame + ETH_HLEN + iph.ihl * 4)
+		std::cout << "ip:\t" << os::inet_ntoa(ip_hdr->get_source_address());
+		std::cout << std::setw(50) << os::inet_ntoa(ip_hdr->get_destination_address()) << "\n";	
+		
+		if (ip_hdr->get_protocol() == IPPROTO_TCP) {
+			auto tcp_hdr {
+				viewer.tcp_hdr()
 			};
-			auto data {
-				reinterpret_cast<const unsigned char*>(tcph) + tcph->doff * 4
-			};
-			std::cout << "data: " << data << "\n\n";
+			//std::cout << "port:\t" << os::hton<std::uint16_t>(tcp_hdr->get_source()) << std::setw(20) << os::hton<std::uint16_t>(tcp_hdr->get_dest()) << '\n';
+			std::cout << "data:\t" << viewer.tcp_hdr()->get_data() << "\n\n";
 		} else {
 			std::cout << '\n';
 		}

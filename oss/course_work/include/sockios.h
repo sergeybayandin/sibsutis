@@ -25,7 +25,7 @@ namespace os
 			*ok = res;
 		}
 
-		return s_addr->sin_addr;
+		return s_addr->sin_addr.s_addr;
 	}
 
 	template <class _So>
@@ -44,7 +44,7 @@ namespace os
 			*ok = res;
 		}
 
-		return s_addr->sin_addr;
+		return s_addr->sin_addr.s_addr;
 	}
 
 	template <class _So>
