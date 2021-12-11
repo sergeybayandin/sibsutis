@@ -122,18 +122,19 @@ int main(int argc, char *argv[])
 		auto eth_hdr {
 			viewer.eth_hdr()
 		};
-		
-		std::cout << "mac:\t" << os::eth_ntoa(eth_hdr->get_source_address());
-		std::cout << std::setw(50) << os::eth_ntoa(eth_hdr->get_destination_address()) << '\n';
+	
+		std::cout << "mac:\t" << std::setw(25) << std::left << os::eth_ntoa(eth_hdr->get_source_address());
+		std::cout << "-------->";
+		std::cout << std::setw(25) << std::right << os::eth_ntoa(eth_hdr->get_destination_address()) << '\n';
 
-		std::cout << "ip:\t" << os::inet_ntoa(ip_hdr->get_source_address());
-		std::cout << std::setw(50) << os::inet_ntoa(ip_hdr->get_destination_address()) << "\n";	
+		std::cout << "ip:\t" << std::setw(25) << std::left << os::inet_ntoa(ip_hdr->get_source_address());
+		std::cout << "-------->";
+		std::cout << std::setw(25) << std::right << os::inet_ntoa(ip_hdr->get_destination_address()) << "\n";	
 		
 		if (ip_hdr->get_protocol() == IPPROTO_TCP) {
 			auto tcp_hdr {
 				viewer.tcp_hdr()
 			};
-			//std::cout << "port:\t" << os::hton<std::uint16_t>(tcp_hdr->get_source()) << std::setw(20) << os::hton<std::uint16_t>(tcp_hdr->get_dest()) << '\n';
 			std::cout << "data:\t" << viewer.tcp_hdr()->get_data() << "\n\n";
 		} else {
 			std::cout << '\n';
